@@ -1,5 +1,5 @@
 /*
-** Copyright (C) 2005-2011 Erik de Castro Lopo <erikd@mega-nerd.com>
+** Copyright (C) 2005-2012 Erik de Castro Lopo <erikd@mega-nerd.com>
 **
 ** All rights reserved.
 **
@@ -52,7 +52,7 @@
 #ifndef SNDFILE_HH
 #define SNDFILE_HH
 
-#include <sndfile.h>
+#include "sndfile.h"
 
 #include <string>
 #include <new> // for std::nothrow
@@ -78,6 +78,8 @@ class SndfileHandle
 			SndfileHandle (std::string const & path, int mode = SFM_READ,
 							int format = 0, int channels = 0, int samplerate = 0) ;
 			SndfileHandle (int fd, bool close_desc, int mode = SFM_READ,
+							int format = 0, int channels = 0, int samplerate = 0) ;
+			SndfileHandle (SF_VIRTUAL_IO &sfvirtual, void *user_data, int mode = SFM_READ,
 							int format = 0, int channels = 0, int samplerate = 0) ;
 
 #ifdef ENABLE_SNDFILE_WINDOWS_PROTOTYPES
@@ -116,6 +118,9 @@ class SndfileHandle
 		const char* getString (int str_type) const ;
 
 		static int formatCheck (int format, int channels, int samplerate) ;
+    
+        int setChunk(SF_CHUNK_INFO chunk);
+    
 
 		sf_count_t read (short *ptr, sf_count_t items) ;
 		sf_count_t read (int *ptr, sf_count_t items) ;
@@ -143,7 +148,7 @@ class SndfileHandle
 		/**< Raw access to the handle. SndfileHandle keeps ownership. */
 		SNDFILE * rawHandle (void) ;
 
-		/**< Take ownership of handle, iff reference count is 1. */
+		/**< Take ownership of handle, if reference count is 1. */
 		SNDFILE * takeOwnership (void) ;
 } ;
 
@@ -153,7 +158,7 @@ class SndfileHandle
 
 inline
 SndfileHandle::SNDFILE_ref::SNDFILE_ref (void)
-: ref (1)
+: sf (NULL), sfinfo (), ref (1)
 {}
 
 inline
@@ -230,6 +235,28 @@ SndfileHandle::SndfileHandle (int fd, bool close_desc, int mode, int fmt, int ch
 } /* SndfileHandle fd constructor */
 
 inline
+SndfileHandle::SndfileHandle (SF_VIRTUAL_IO &sfvirtual, void *user_data, int mode, int fmt, int chans, int srate)
+: p (NULL)
+{
+	p = new (std::nothrow) SNDFILE_ref () ;
+
+	if (p != NULL)
+	{	p->ref = 1 ;
+
+		p->sfinfo.frames = 0 ;
+		p->sfinfo.channels = chans ;
+		p->sfinfo.format = fmt ;
+		p->sfinfo.samplerate = srate ;
+		p->sfinfo.sections = 0 ;
+		p->sfinfo.seekable = 0 ;
+
+		p->sf = sf_open_virtual (&sfvirtual, mode, &p->sfinfo, user_data) ;
+		} ;
+
+	return ;
+} /* SndfileHandle std::string constructor */
+
+inline
 SndfileHandle::~SndfileHandle (void)
 {	if (p != NULL && --p->ref == 0)
 		delete p ;
@@ -299,6 +326,10 @@ SndfileHandle::formatCheck (int fmt, int chans, int srate)
 	sfinfo.seekable = 0 ;
 
 	return sf_format_check (&sfinfo) ;
+}
+
+inline int SndfileHandle::setChunk(const SF_CHUNK_INFO chunk){
+    return sf_set_chunk(p->sf, &chunk);
 }
 
 /*---------------------------------------------------------------------*/
