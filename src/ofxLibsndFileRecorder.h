@@ -5,8 +5,8 @@
 class ofxLibsndFileRecorder{
 	public :
 	
-	ofxLibsndFileRecorder();
-	void setup(string fileName, int sampleRate=44100, int numChannels=1);
+	ofxLibsndFileRecorder();  
+    void setup(string fileName, int sampleRate=44100, int numChannels=1, int audioFormat=SF_FORMAT_PCM_16 | SF_FORMAT_WAV);
 	void addSamples(float* &input, int numSamples);
 	
 	

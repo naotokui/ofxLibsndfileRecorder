@@ -5,13 +5,12 @@ ofxLibsndFileRecorder::ofxLibsndFileRecorder(){
 	recordingBuffer=NULL;
 }
 
-
-void ofxLibsndFileRecorder::setup(string fileName, int sampleRate_, int numChannels_){
+void ofxLibsndFileRecorder::setup(string fileName, int sampleRate_, int numChannels_, int audioFormat_){
 	
 	sampleRate=sampleRate_;
 	numChannels = numChannels_;
 	recordingSize=0;
-	audioFormat=SF_FORMAT_WAV | SF_FORMAT_PCM_16;
+	audioFormat= audioFormat_;
 	
 	//cout << "SND PATH: "<<ofToDataPath(fileName,true)<<"\n";
 	outFile=new SndfileHandle(ofToDataPath(fileName,true),SFM_RDWR, audioFormat, numChannels, sampleRate);
