@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ofUtils.h"
 #include "sndfile.hh"
 
@@ -34,3 +36,4 @@ class ofxLibsndFileRecorder{
 		int				recordingSize;
 	
 };
+
